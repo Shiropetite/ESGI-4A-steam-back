@@ -1,16 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 
-import {
-  getGameDetailsURL,
-  getGameReviewsURL,
-  getGameTopURL,
-  searchGameURL,
-} from './url';
+import { Game } from './game.entity';
+
+const getGameTopURL = (): string =>
+  `https://api.steampowered.com/ISteamChartsService/GetMostPlayedGames/v1/`;
+const getGameDetailsURL = (id: string): string =>
+  `https://store.steampowered.com/api/appdetails?lan=fr&appids=${id}`;
+const getGameReviewsURL = (id: string): string =>
+  `https://store.steampowered.com/appreviews/${id}?json=1`;
+const searchGameURL = (text: string): string =>
+  `https://store.steampowered.com/api/storesearch/?term=${text}&l=french&cc=FR`;
 
 @Injectable()
-export class AppService {
-  async getTop(size = 10): Promise<any[]> {
+export class GameService {
+  async getTop(size = 10): Promise<Game[]> {
     const response = await axios.get(getGameTopURL());
 
     if (response.status === 200 && response) {
@@ -45,7 +49,7 @@ export class AppService {
     return Promise.reject([]);
   }
 
-  async getDetails(id: string): Promise<any> {
+  async getDetails(id: string): Promise<Game> {
     const response = await axios.get(getGameDetailsURL(id));
     const responseReviews = await axios.get(getGameReviewsURL(id));
 
@@ -76,7 +80,7 @@ export class AppService {
     return Promise.reject({});
   }
 
-  async searchGame(text: string): Promise<any> {
+  async findByName(text: string): Promise<any> {
     const response = await axios.get(searchGameURL(text));
 
     if (response.status === 200) {
