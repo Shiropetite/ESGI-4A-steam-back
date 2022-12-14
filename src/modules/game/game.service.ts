@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 
-import { Game } from './game.entity';
+import { Game, GameDetail } from './game.entity';
 
 const getGameTopURL = (): string =>
   `https://api.steampowered.com/ISteamChartsService/GetMostPlayedGames/v1/`;
@@ -30,9 +30,11 @@ export class GameService {
             return {
               id: value.appid,
               name: gameResponse.data[value.appid].data.name,
-              editor: gameResponse.data[value.appid].data.developers[0],
-              cover_image: gameResponse.data[value.appid].data.header_image,
-              background_image: gameResponse.data[value.appid].data.background,
+              publisher: gameResponse.data[value.appid].data.developers[0],
+              mini_image: gameResponse.data[value.appid].data.header_image,
+              bg_image: gameResponse.data[value.appid].data.background,
+              description:
+                gameResponse.data[value.appid].data.detailed_description,
               price:
                 gameResponse.data[value.appid].data.price_overview
                   ?.final_formatted ?? 'Gratuit',
@@ -49,7 +51,7 @@ export class GameService {
     return Promise.reject([]);
   }
 
-  async getDetails(id: string): Promise<Game> {
+  async getDetails(id: string): Promise<GameDetail> {
     const response = await axios.get(getGameDetailsURL(id));
     const responseReviews = await axios.get(getGameReviewsURL(id));
 
@@ -67,9 +69,10 @@ export class GameService {
       return Promise.resolve({
         id,
         name: response.data[id].data.name,
-        editor: response.data[id].data.developers[0],
-        cover_image: response.data[id].data.header_image,
-        background_image: response.data[id].data.background,
+        publisher: response.data[id].data.developers[0],
+        mini_image: response.data[id].data.header_image,
+        cover_image: response.data[id].data.background_raw,
+        bg_image: response.data[id].data.background,
         price:
           response.data[id].data.price_overview?.final_formatted ?? 'Gratuit',
         description: response.data[id].data.detailed_description,
@@ -80,7 +83,7 @@ export class GameService {
     return Promise.reject({});
   }
 
-  async findByName(text: string): Promise<any> {
+  async findByName(text: string): Promise<{ count: number; result: Game[] }> {
     const response = await axios.get(searchGameURL(text));
 
     if (response.status === 200) {
@@ -91,12 +94,14 @@ export class GameService {
           return {
             id: item.id,
             name: item.name,
-            editor: detailsResponse.data[item.id].data.developers[0],
-            cover_image: detailsResponse.data[item.id].data.header_image,
-            background_image: detailsResponse.data[item.id].data.background,
+            publisher: detailsResponse.data[item.id].data.developers[0],
+            mini_image: detailsResponse.data[item.id].data.header_image,
+            bg_image: detailsResponse.data[item.id].data.background,
             price:
               detailsResponse.data[item.id].data.price_overview
                 ?.final_formatted ?? 'Gratuit',
+            description:
+              detailsResponse.data[item.id].data.detailed_description,
           };
         }),
       );
@@ -105,6 +110,6 @@ export class GameService {
         result: formatedResponse,
       });
     }
-    return Promise.reject({ count: 0 });
+    return Promise.reject({ count: 0, result: [] });
   }
 }

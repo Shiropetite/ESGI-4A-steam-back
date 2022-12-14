@@ -1,10 +1,18 @@
 export class Game {
   id: string;
   name: string;
-  desc: string;
   publisher: string;
-  price: number;
-  cover_image: string;
+  mini_image: string;
   bg_image: string;
-  reviews: string[];
+  price: string;
+  description: string;
+}
+
+export class GameDetail extends Game {
+  cover_image: string;
+  reviews: {
+    name: string;
+    good_grade: boolean;
+    review: string;
+  }[];
 }
