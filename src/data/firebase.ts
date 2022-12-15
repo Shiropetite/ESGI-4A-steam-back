@@ -1,6 +1,7 @@
 // Import the functions you need from the SDKs you need
-import { FirebaseApp, initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs } from 'firebase/firestore/lite';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, getDocs, setDoc, doc } from 'firebase/firestore';
+import { User } from './../modules/user/user.entity';
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -21,8 +22,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const getGames = async (db) => {
-  const gamesCollection = collection(db, 'games');
-  const gamesSnapshot = await getDocs(gamesCollection);
-  return gamesSnapshot.docs.map((doc) => doc.data());
+export const getUsers = async (): Promise<User[]> => {
+  return (await getDocs(collection(db, 'users'))).docs.map((doc) => ({id: doc.id, ...doc.data()}) as User);
 };
+
+export const createUser = async (user: User): Promise<void> => {
+  await setDoc(doc(collection(db, 'users')), {
+    ...user
+  });
+}

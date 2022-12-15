@@ -1,7 +1,6 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { Query } from '@nestjs/common/decorators';
-import { GameService } from './game.service';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { Game, GameDetail } from './game.entity';
+import { GameService } from './game.service';
 
 @Controller('/games')
 export class GameController {
