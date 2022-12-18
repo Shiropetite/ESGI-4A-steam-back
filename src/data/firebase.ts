@@ -1,4 +1,5 @@
 // Import the functions you need from the SDKs you need
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, setDoc, doc } from 'firebase/firestore';
 import { User } from './../modules/user/user.entity';
@@ -23,11 +24,25 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 export const getUsers = async (): Promise<User[]> => {
-  return (await getDocs(collection(db, 'users'))).docs.map((doc) => ({id: doc.id, ...doc.data()}) as User);
+  return (await getDocs(collection(db, 'users'))).docs.map(
+    (doc) => ({ id: doc.id, ...doc.data() } as User),
+  );
 };
 
-export const createUser = async (user: User): Promise<void> => {
+export const createUser = async (user: User): Promise<User> => {
   await setDoc(doc(collection(db, 'users')), {
-    ...user
+    ...user,
+    likedGames: [],
+    wishlistedGames: [],
   });
-}
+
+  // verification
+  const newUser = (await getUsers()).find((u) => u.email === user.email);
+  if (newUser === undefined) {
+    throw new HttpException(
+      'User failed to be created',
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+  return Promise.resolve(newUser);
+};
