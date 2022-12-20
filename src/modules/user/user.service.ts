@@ -11,7 +11,7 @@ export class UserService {
         return user;
       }
     }
-    return null;
+    throw new HttpException("User don't exist", HttpStatus.BAD_REQUEST);
   }
 
   async signUp(newUser: User): Promise<User> {

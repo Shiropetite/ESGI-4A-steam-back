@@ -7,7 +7,7 @@ export class GameController {
   constructor(private readonly service: GameService) {}
 
   @Get('/top')
-  async getTop(@Query('size') size: string): Promise<Game[]> {
+  async getTop(@Query('size') size: string): Promise<{ games: Game[] }> {
     return await this.service.getTop(size ? Number.parseInt(size) : undefined);
   }
 

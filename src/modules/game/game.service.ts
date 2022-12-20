@@ -14,7 +14,7 @@ const searchGameURL = (text: string): string =>
 
 @Injectable()
 export class GameService {
-  async getTop(size = 10): Promise<Game[]> {
+  async getTop(size = 10): Promise<{ games: Game[] }> {
     const response = await axios.get(getGameTopURL());
 
     if (response.status === 200 && response) {
@@ -45,10 +45,10 @@ export class GameService {
         }),
       );
 
-      return Promise.resolve(formatedResponse);
+      return Promise.resolve({ games: formatedResponse });
     }
 
-    return Promise.reject([]);
+    return Promise.reject({ games: [] });
   }
 
   async getDetails(id: string): Promise<GameDetail> {
