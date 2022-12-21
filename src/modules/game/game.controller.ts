@@ -4,6 +4,7 @@ import { GameService } from './game.service';
 
 @Controller('/games')
 export class GameController {
+  
   constructor(private readonly service: GameService) {}
 
   @Get('/top')
@@ -14,7 +15,7 @@ export class GameController {
   @Get('/search')
   async findByName(
     @Query('name') name: string,
-  ): Promise<{ count: number; result: Game[] }> {
+  ): Promise<{ count: number; games: Game[] }> {
     return await this.service.findByName(name);
   }
 
