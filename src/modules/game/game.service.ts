@@ -6,7 +6,7 @@ import { Game, GameDetail } from './game.entity';
 const getGameTopURL = (): string =>
   `https://api.steampowered.com/ISteamChartsService/GetMostPlayedGames/v1/`;
 const getGameDetailsURL = (id: string): string =>
-  `https://store.steampowered.com/api/appdetails?lan=fr&appids=${id}`;
+  `https://store.steampowered.com/api/appdetails?l=french&appids=${id}`;
 const getGameReviewsURL = (id: string): string =>
   `https://store.steampowered.com/appreviews/${id}?json=1`;
 const searchGameURL = (text: string): string =>
@@ -14,7 +14,6 @@ const searchGameURL = (text: string): string =>
 
 @Injectable()
 export class GameService {
-  
   async getTop(size = 10): Promise<{ games: Game[] }> {
     const response = await axios.get(getGameTopURL());
 
@@ -112,5 +111,25 @@ export class GameService {
       });
     }
     return Promise.reject({ count: 0, games: [] });
+  }
+
+  async getGameById(id: string): Promise<Game> {
+    const detailsResponse = await axios.get(getGameDetailsURL(id));
+
+    if (detailsResponse.status === 200) {
+      return Promise.resolve({
+        id: id,
+        name: detailsResponse.data[id].data.name,
+        publisher: detailsResponse.data[id].data.developers[0],
+        mini_image: detailsResponse.data[id].data.header_image,
+        bg_image: detailsResponse.data[id].data.background,
+        price:
+          detailsResponse.data[id].data.price_overview?.final_formatted ??
+          'Gratuit',
+        description: detailsResponse.data[id].data.detailed_description,
+      });
+    }
+
+    return Promise.reject(null);
   }
 }

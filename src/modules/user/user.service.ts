@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { createUser, getUsers } from '../../data/firebase'
+import { createUser, getUsers } from '../../data/firebase';
 import { User } from './user.entity';
 
 @Injectable()

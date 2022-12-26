@@ -1,8 +1,15 @@
 // Import the functions you need from the SDKs you need
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs, setDoc, doc } from 'firebase/firestore';
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  setDoc,
+  doc,
+} from 'firebase/firestore';
 import { User } from './../modules/user/user.entity';
+import { GameService } from './../modules/game/game.service';
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -24,9 +31,29 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 export const getUsers = async (): Promise<User[]> => {
-  return (await getDocs(collection(db, 'users'))).docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() } as User),
+  const userDb = (await getDocs(collection(db, 'users'))).docs.map(
+    (doc) => ({ id: doc.id, ...doc.data() } as any),
   );
+
+  const service = new GameService();
+
+  const user = await Promise.all(
+    userDb.map(async (u) => {
+      const newUser = u;
+      newUser.likedGames = await Promise.all(
+        newUser.likedGames.map(async (likedGame) => {
+          return await service.getGameById(likedGame);
+        }),
+      );
+      newUser.wishlistedGames = await Promise.all(
+        newUser.wishlistedGames.map(async (wishlistedGame) => {
+          return await service.getGameById(wishlistedGame);
+        }),
+      );
+      return newUser;
+    }),
+  );
+  return user;
 };
 
 export const createUser = async (user: User): Promise<User> => {

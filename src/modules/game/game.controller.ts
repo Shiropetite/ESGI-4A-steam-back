@@ -4,7 +4,6 @@ import { GameService } from './game.service';
 
 @Controller('/games')
 export class GameController {
-  
   constructor(private readonly service: GameService) {}
 
   @Get('/top')
