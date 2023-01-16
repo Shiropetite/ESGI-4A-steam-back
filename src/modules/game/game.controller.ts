@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { Game, GameDetail } from './game.entity';
+import { Game, Reviews } from './game.entity';
 import { GameService } from './game.service';
 
 @Controller('/games')
@@ -18,8 +18,8 @@ export class GameController {
     return await this.service.findByName(name);
   }
 
-  @Get('/:id/details')
-  async getDetails(@Param('id') id: string): Promise<GameDetail> {
-    return await this.service.getDetails(id);
+  @Get('/:id/reviews')
+  async getReviews(@Param('id') id: string): Promise<{ reviews: Reviews[] }> {
+    return { reviews: await this.service.getReviews(id) };
   }
 }

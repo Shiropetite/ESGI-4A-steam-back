@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 
-import { Game, GameDetail } from './game.entity';
+import { Game, Reviews } from './game.entity';
 
 const getGameTopURL = (): string =>
   `https://api.steampowered.com/ISteamChartsService/GetMostPlayedGames/v1/`;
@@ -14,6 +14,11 @@ const searchGameURL = (text: string): string =>
 
 @Injectable()
 export class GameService {
+  /**
+   * Get the top game of steam
+   * @param size - number of game in the top
+   * @returns
+   */
   async getTop(size = 10): Promise<{ games: Game[] }> {
     const response = await axios.get(getGameTopURL());
 
@@ -33,6 +38,7 @@ export class GameService {
               publisher: gameResponse.data[value.appid].data.developers[0],
               mini_image: gameResponse.data[value.appid].data.header_image,
               bg_image: gameResponse.data[value.appid].data.background,
+              cover_image: gameResponse.data[value.appid].data.background_raw,
               description:
                 gameResponse.data[value.appid].data.detailed_description,
               price:
@@ -51,14 +57,18 @@ export class GameService {
     return Promise.reject({ games: [] });
   }
 
-  async getDetails(id: string): Promise<GameDetail> {
-    const response = await axios.get(getGameDetailsURL(id));
-    const responseReviews = await axios.get(getGameReviewsURL(id));
+  /**
+   * Get reviews of a steam game
+   * @param id - game id
+   * @returns
+   */
+  async getReviews(id: string): Promise<Reviews[]> {
+    const response = await axios.get(getGameReviewsURL(id));
 
-    const formatedReviews = await Promise.all(
-      responseReviews.data.reviews.map((r) => {
+    const formatedResponse = await Promise.all(
+      response.data.reviews.map((r) => {
         return {
-          name: 'Patate',
+          name: `User_${(Math.random() * 1000).toFixed(0)}`,
           good_grade: r.voted_up,
           review: r.review,
         };
@@ -66,23 +76,17 @@ export class GameService {
     );
 
     if (response.status === 200) {
-      return Promise.resolve({
-        id,
-        name: response.data[id].data.name,
-        publisher: response.data[id].data.developers[0],
-        mini_image: response.data[id].data.header_image,
-        cover_image: response.data[id].data.background_raw,
-        bg_image: response.data[id].data.background,
-        price:
-          response.data[id].data.price_overview?.final_formatted ?? 'Gratuit',
-        description: response.data[id].data.detailed_description,
-        reviews: formatedReviews,
-      });
+      return formatedResponse;
     }
 
     return Promise.reject({});
   }
 
+  /**
+   * Find a game by name
+   * @param text - search game
+   * @returns
+   */
   async findByName(text: string): Promise<{ count: number; games: Game[] }> {
     const response = await axios.get(searchGameURL(text));
 
@@ -113,6 +117,11 @@ export class GameService {
     return Promise.reject({ count: 0, games: [] });
   }
 
+  /**
+   * Get a game by id
+   * @param id - game id
+   * @returns
+   */
   async getGameById(id: string): Promise<Game> {
     const detailsResponse = await axios.get(getGameDetailsURL(id));
 
@@ -123,6 +132,7 @@ export class GameService {
         publisher: detailsResponse.data[id].data.developers[0],
         mini_image: detailsResponse.data[id].data.header_image,
         bg_image: detailsResponse.data[id].data.background,
+        cover_image: detailsResponse.data[id].data.background_raw,
         price:
           detailsResponse.data[id].data.price_overview?.final_formatted ??
           'Gratuit',

@@ -6,13 +6,11 @@ export class Game {
   bg_image: string;
   price: string;
   description: string;
+  cover_image: string;
 }
 
-export class GameDetail extends Game {
-  cover_image: string;
-  reviews: {
-    name: string;
-    good_grade: boolean;
-    review: string;
-  }[];
+export class Reviews {
+  name: string;
+  good_grade: boolean;
+  review: string;
 }

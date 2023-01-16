@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Query } from '@nestjs/common';
-import { Body } from '@nestjs/common/decorators';
+import { Body, Param, Put } from '@nestjs/common/decorators';
 import { User } from './user.entity';
 import { UserService } from './user.service';
 
@@ -18,5 +18,37 @@ export class UserController {
   @Post('/signup')
   async signUp(@Body() newUser: User): Promise<User> {
     return await this.service.signUp(newUser);
+  }
+
+  @Put('/add-like/:id/:idGame')
+  async like(
+    @Param('id') id: string,
+    @Param('idGame') idGame: string,
+  ): Promise<void> {
+    await this.service.like(id, idGame);
+  }
+
+  @Put('/remove-like/:id/:idGame')
+  async unlike(
+    @Param('id') id: string,
+    @Param('idGame') idGame: string,
+  ): Promise<void> {
+    await this.service.unlike(id, idGame);
+  }
+
+  @Put('/add-wishlist/:id/:idGame')
+  async wishlist(
+    @Param('id') id: string,
+    @Param('idGame') idGame: string,
+  ): Promise<void> {
+    await this.service.wishlist(id, idGame);
+  }
+
+  @Put('/remove-wishlist/:id/:idGame')
+  async unwishlist(
+    @Param('id') id: string,
+    @Param('idGame') idGame: string,
+  ): Promise<void> {
+    await this.service.unwishlist(id, idGame);
   }
 }
