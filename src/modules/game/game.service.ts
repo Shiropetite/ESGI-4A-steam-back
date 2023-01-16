@@ -101,6 +101,7 @@ export class GameService {
             publisher: detailsResponse.data[item.id].data.developers[0],
             mini_image: detailsResponse.data[item.id].data.header_image,
             bg_image: detailsResponse.data[item.id].data.background,
+            cover_image: detailsResponse.data[item.id].data.background_raw,
             price:
               detailsResponse.data[item.id].data.price_overview
                 ?.final_formatted ?? 'Gratuit',
