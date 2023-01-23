@@ -10,7 +10,9 @@ const getGameDetailsUrl = (id: string, lang: string): string =>
 const getGameReviewsUrl = (id: string): string =>
   `https://store.steampowered.com/appreviews/${id}?json=1`;
 const findByNameUrl = (text: string, lang: string): string =>
-  `https://store.steampowered.com/api/storesearch/?term=${text}&l=${lang}`;
+  `https://store.steampowered.com/api/storesearch/?term=${text}&cc=${
+    lang === 'french' ? 'FR' : 'US'
+  }`;
 
 @Injectable()
 export class GameService {
@@ -28,7 +30,7 @@ export class GameService {
       let games = steamRanks.slice(0, size);
       games = await Promise.all(
         games.map(async (game): Promise<Game> => {
-          return await this.getGameDetails(game.id, lang);
+          return await this.getGameDetails(game.appid, lang);
         }),
       );
 
@@ -47,8 +49,7 @@ export class GameService {
     text: string,
     lang = 'french',
   ): Promise<{ count: number; games: Game[] }> {
-    const steamGames = await axios.get(findByNameUrl(text, 'french'));
-
+    const steamGames = await axios.get(findByNameUrl(text, lang));
     if (steamGames && steamGames.status === 200) {
       const games = await Promise.all(
         steamGames.data.items.map(async (game): Promise<Game> => {
@@ -73,7 +74,6 @@ export class GameService {
     const steamGameDetail = await axios.get(getGameDetailsUrl(id, lang));
 
     if (steamGameDetail && steamGameDetail.status === 200) {
-      console.log(steamGameDetail);
       return Promise.resolve({
         id: id,
         name: steamGameDetail.data[id].data.name,
