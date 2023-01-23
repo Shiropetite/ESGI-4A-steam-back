@@ -74,6 +74,7 @@ export class GameService {
     const steamGameDetail = await axios.get(getGameDetailsUrl(id, lang));
 
     if (steamGameDetail && steamGameDetail.status === 200) {
+      const traductionFree = lang === 'french' ? 'Gratuit' : 'Free';
       return Promise.resolve({
         id: id,
         name: steamGameDetail.data[id].data.name,
@@ -84,9 +85,7 @@ export class GameService {
         description: steamGameDetail.data[id].data.detailed_description,
         price:
           steamGameDetail.data[id].data.price_overview?.final_formatted ??
-          lang === 'french'
-            ? 'Gratuit'
-            : 'Free',
+          traductionFree,
       });
     }
 
