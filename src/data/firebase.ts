@@ -1,6 +1,3 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
-
-// Firebase
 import { initializeApp } from 'firebase/app';
 import {
   getFirestore,
@@ -11,6 +8,9 @@ import {
   updateDoc,
   arrayUnion,
   arrayRemove,
+  DocumentSnapshot,
+  DocumentData,
+  getDoc,
 } from 'firebase/firestore';
 
 // Modules
@@ -32,34 +32,57 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+export const parseUser = async (
+  userFirebase: DocumentSnapshot<DocumentData>,
+): Promise<User> => {
+  const userDb = {
+    id: userFirebase.id,
+    ...userFirebase.data(),
+  } as any;
+
+  const service = new GameService();
+
+  const likedGames = await Promise.all(
+    userDb.likedGames.map(async (likedGame) => {
+      return await service.getGameDetails(likedGame);
+    }),
+  );
+
+  const wishlistedGames = await Promise.all(
+    userDb.wishlistedGames.map(async (wishlistedGame) => {
+      return await service.getGameDetails(wishlistedGame);
+    }),
+  );
+
+  return {
+    ...userDb,
+    likedGames,
+    wishlistedGames,
+  } as User;
+};
+
 /**
  * Get all the users from database
  * @returns
  */
 export const getUsers = async (): Promise<User[]> => {
-  const userDb = (await getDocs(collection(db, 'users'))).docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() } as any),
-  );
+  const usersFirebase = await getDocs(collection(db, 'users'));
 
-  const service = new GameService();
-
-  const user = await Promise.all(
-    userDb.map(async (u) => {
-      const newUser = u;
-      newUser.likedGames = await Promise.all(
-        newUser.likedGames.map(async (likedGame) => {
-          return await service.getGameById(likedGame);
-        }),
-      );
-      newUser.wishlistedGames = await Promise.all(
-        newUser.wishlistedGames.map(async (wishlistedGame) => {
-          return await service.getGameById(wishlistedGame);
-        }),
-      );
-      return newUser;
+  return await Promise.all(
+    usersFirebase.docs.map(async (doc) => {
+      return await parseUser(doc);
     }),
   );
-  return user;
+};
+
+/**
+ * Get a user by id from database
+ * @returns
+ */
+export const getUserById = async (id: string): Promise<User> => {
+  const userFirebase = await getDoc(doc(db, 'users', id));
+
+  return await parseUser(userFirebase);
 };
 
 /**
@@ -77,10 +100,7 @@ export const createUser = async (user: User): Promise<User> => {
   // verification
   const newUser = (await getUsers()).find((u) => u.email === user.email);
   if (newUser === undefined) {
-    throw new HttpException(
-      'User failed to be created',
-      HttpStatus.BAD_REQUEST,
-    );
+    return Promise.reject('User failed to be created');
   }
   return Promise.resolve(newUser);
 };
@@ -90,10 +110,13 @@ export const createUser = async (user: User): Promise<User> => {
  * @param id : user id
  * @param gameId : game id
  */
-export const addLike = async (id: string, gameId: string): Promise<void> => {
+export const addLike = async (id: string, gameId: string): Promise<User> => {
   await updateDoc(doc(db, `users/${id}`), {
     likedGames: arrayUnion(gameId),
   });
+
+  const newUser = await getUserById(id);
+  return Promise.resolve(newUser);
 };
 
 /**
@@ -101,10 +124,14 @@ export const addLike = async (id: string, gameId: string): Promise<void> => {
  * @param id : user id
  * @param gameId : game id
  */
-export const removeLike = async (id: string, gameId: string): Promise<void> => {
+export const removeLike = async (id: string, gameId: string): Promise<User> => {
   await updateDoc(doc(db, `users/${id}`), {
     likedGames: arrayRemove(gameId),
   });
+
+  // verification
+  const newUser = await getUserById(id);
+  return Promise.resolve(newUser);
 };
 
 /**
@@ -115,10 +142,14 @@ export const removeLike = async (id: string, gameId: string): Promise<void> => {
 export const addWishlist = async (
   id: string,
   gameId: string,
-): Promise<void> => {
+): Promise<User> => {
   await updateDoc(doc(db, `users/${id}`), {
     wishlistedGames: arrayUnion(gameId),
   });
+
+  // verification
+  const newUser = await getUserById(id);
+  return Promise.resolve(newUser);
 };
 
 /**
@@ -129,8 +160,12 @@ export const addWishlist = async (
 export const removeWishlist = async (
   id: string,
   gameId: string,
-): Promise<void> => {
+): Promise<User> => {
   await updateDoc(doc(db, `users/${id}`), {
     wishlistedGames: arrayRemove(gameId),
   });
+
+  // verification
+  const newUser = await getUserById(id);
+  return Promise.resolve(newUser);
 };

@@ -9,8 +9,8 @@ export class Game {
   cover_image: string;
 }
 
-export class Reviews {
-  name: string;
+export class GameReview {
+  username: string;
   good_grade: boolean;
-  review: string;
+  text: string;
 }

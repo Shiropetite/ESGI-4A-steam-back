@@ -20,35 +20,35 @@ export class UserController {
     return await this.service.signUp(newUser);
   }
 
-  @Put('/add-like/:id/:idGame')
+  @Put('/:id/add-like/:idGame')
   async like(
     @Param('id') id: string,
     @Param('idGame') idGame: string,
-  ): Promise<void> {
-    await this.service.like(id, idGame);
+  ): Promise<User> {
+    return await this.service.like(id, idGame);
   }
 
-  @Put('/remove-like/:id/:idGame')
+  @Put('/:id/remove-like/:idGame')
   async unlike(
     @Param('id') id: string,
     @Param('idGame') idGame: string,
-  ): Promise<void> {
-    await this.service.unlike(id, idGame);
+  ): Promise<User> {
+    return await this.service.unlike(id, idGame);
   }
 
-  @Put('/add-wishlist/:id/:idGame')
+  @Put('/:id/add-wishlist/:idGame')
   async wishlist(
     @Param('id') id: string,
     @Param('idGame') idGame: string,
-  ): Promise<void> {
-    await this.service.wishlist(id, idGame);
+  ): Promise<User> {
+    return await this.service.wishlist(id, idGame);
   }
 
-  @Put('/remove-wishlist/:id/:idGame')
+  @Put('/:id/remove-wishlist/:idGame')
   async unwishlist(
     @Param('id') id: string,
     @Param('idGame') idGame: string,
-  ): Promise<void> {
-    await this.service.unwishlist(id, idGame);
+  ): Promise<User> {
+    return await this.service.unwishlist(id, idGame);
   }
 }

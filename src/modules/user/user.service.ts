@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   createUser,
   getUsers,
@@ -19,12 +19,14 @@ export class UserService {
    */
   async signIn(email: string, password: string): Promise<User> {
     const users = await getUsers();
+
     for (const user of users) {
       if (user.email === email && user.password === password) {
         return user;
       }
     }
-    throw new HttpException("User don't exist", HttpStatus.BAD_REQUEST);
+
+    return Promise.reject("User doesn't exist");
   }
 
   /**
@@ -37,7 +39,7 @@ export class UserService {
     const sameUser = users.find((u) => u.email === newUser.email);
 
     if (sameUser) {
-      throw new HttpException('User already exist', HttpStatus.BAD_REQUEST);
+      return Promise.reject('User already exist');
     }
     return await createUser(newUser);
   }
@@ -47,8 +49,8 @@ export class UserService {
    * @param id - user id
    * @param idGame - game id
    */
-  async like(id: string, idGame: string): Promise<void> {
-    await addLike(id, idGame);
+  async like(id: string, idGame: string): Promise<User> {
+    return await addLike(id, idGame);
   }
 
   /**
@@ -56,8 +58,8 @@ export class UserService {
    * @param id - user id
    * @param idGame - game id
    */
-  async unlike(id: string, idGame: string): Promise<void> {
-    await removeLike(id, idGame);
+  async unlike(id: string, idGame: string): Promise<User> {
+    return await removeLike(id, idGame);
   }
 
   /**
@@ -65,8 +67,8 @@ export class UserService {
    * @param id - user id
    * @param idGame - game id
    */
-  async wishlist(id: string, idGame: string): Promise<void> {
-    await addWishlist(id, idGame);
+  async wishlist(id: string, idGame: string): Promise<User> {
+    return await addWishlist(id, idGame);
   }
 
   /**
@@ -74,7 +76,7 @@ export class UserService {
    * @param id - user id
    * @param idGame - game id
    */
-  async unwishlist(id: string, idGame: string): Promise<void> {
-    await removeWishlist(id, idGame);
+  async unwishlist(id: string, idGame: string): Promise<User> {
+    return await removeWishlist(id, idGame);
   }
 }

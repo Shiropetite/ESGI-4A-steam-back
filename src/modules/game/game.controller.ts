@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { Game, Reviews } from './game.entity';
+import { Game, GameReview } from './game.entity';
 import { GameService } from './game.service';
 
 @Controller('/games')
@@ -7,19 +7,28 @@ export class GameController {
   constructor(private readonly service: GameService) {}
 
   @Get('/top')
-  async getTop(@Query('size') size: string): Promise<{ games: Game[] }> {
-    return await this.service.getTop(size ? Number.parseInt(size) : undefined);
+  async getTop(
+    @Query('size') size: string,
+    @Query('lang') lang: string,
+  ): Promise<{ games: Game[] }> {
+    return await this.service.getTop(
+      size ? Number.parseInt(size) : undefined,
+      lang,
+    );
   }
 
   @Get('/search')
   async findByName(
     @Query('name') name: string,
+    @Query('lang') lang: string,
   ): Promise<{ count: number; games: Game[] }> {
-    return await this.service.findByName(name);
+    return await this.service.findByName(name, lang);
   }
 
   @Get('/:id/reviews')
-  async getReviews(@Param('id') id: string): Promise<{ reviews: Reviews[] }> {
-    return { reviews: await this.service.getReviews(id) };
+  async getReviews(
+    @Param('id') id: string,
+  ): Promise<{ reviews: GameReview[] }> {
+    return { reviews: await this.service.getGameReviews(id) };
   }
 }

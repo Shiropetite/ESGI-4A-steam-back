@@ -1,118 +1,64 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 
-import { Game, Reviews } from './game.entity';
+import { Game, GameReview } from './game.entity';
 
-const getGameTopURL = (): string =>
+const getTopUrl = (): string =>
   `https://api.steampowered.com/ISteamChartsService/GetMostPlayedGames/v1/`;
-const getGameDetailsURL = (id: string): string =>
-  `https://store.steampowered.com/api/appdetails?l=french&appids=${id}`;
-const getGameReviewsURL = (id: string): string =>
+const getGameDetailsUrl = (id: string, lang: string): string =>
+  `https://store.steampowered.com/api/appdetails?appids=${id}&l=${lang}`;
+const getGameReviewsUrl = (id: string): string =>
   `https://store.steampowered.com/appreviews/${id}?json=1`;
-const searchGameURL = (text: string): string =>
-  `https://store.steampowered.com/api/storesearch/?term=${text}&l=french&cc=FR`;
+const findByNameUrl = (text: string, lang: string): string =>
+  `https://store.steampowered.com/api/storesearch/?term=${text}&l=${lang}`;
 
 @Injectable()
 export class GameService {
   /**
    * Get the top game of steam
-   * @param size - number of game in the top
-   * @returns
+   * @param size - number of games to fetch
+   * @returns list of games
    */
-  async getTop(size = 10): Promise<{ games: Game[] }> {
-    const response = await axios.get(getGameTopURL());
+  async getTop(size = 10, lang = 'french'): Promise<{ games: Game[] }> {
+    const searchTopGamesIds = await axios.get(getTopUrl());
 
-    if (response.status === 200 && response) {
-      let formatedResponse = [];
-      const ranks = response.data.response.ranks;
+    if (searchTopGamesIds && searchTopGamesIds.status === 200) {
+      const steamRanks = searchTopGamesIds.data.response.ranks;
 
-      formatedResponse = ranks.slice(0, size);
-      formatedResponse = await Promise.all(
-        formatedResponse.map(async (value) => {
-          const gameResponse = await axios.get(getGameDetailsURL(value.appid));
-
-          if (gameResponse.status === 200) {
-            return {
-              id: value.appid,
-              name: gameResponse.data[value.appid].data.name,
-              publisher: gameResponse.data[value.appid].data.developers[0],
-              mini_image: gameResponse.data[value.appid].data.header_image,
-              bg_image: gameResponse.data[value.appid].data.background,
-              cover_image: gameResponse.data[value.appid].data.background_raw,
-              description:
-                gameResponse.data[value.appid].data.detailed_description,
-              price:
-                gameResponse.data[value.appid].data.price_overview
-                  ?.final_formatted ?? 'Gratuit',
-            };
-          }
-
-          return { appid: value.appid };
+      let games = steamRanks.slice(0, size);
+      games = await Promise.all(
+        games.map(async (game): Promise<Game> => {
+          return await this.getGameDetails(game.id, lang);
         }),
       );
 
-      return Promise.resolve({ games: formatedResponse });
+      return Promise.resolve({ games: games });
     }
 
     return Promise.reject({ games: [] });
   }
 
   /**
-   * Get reviews of a steam game
-   * @param id - game id
-   * @returns
-   */
-  async getReviews(id: string): Promise<Reviews[]> {
-    const response = await axios.get(getGameReviewsURL(id));
-
-    const formatedResponse = await Promise.all(
-      response.data.reviews.map((r) => {
-        return {
-          name: `User_${(Math.random() * 1000).toFixed(0)}`,
-          good_grade: r.voted_up,
-          review: r.review,
-        };
-      }),
-    );
-
-    if (response.status === 200) {
-      return formatedResponse;
-    }
-
-    return Promise.reject({});
-  }
-
-  /**
    * Find a game by name
-   * @param text - search game
-   * @returns
+   * @param text - search terms
+   * @returns games corresponding to search terms
    */
-  async findByName(text: string): Promise<{ count: number; games: Game[] }> {
-    const response = await axios.get(searchGameURL(text));
+  async findByName(
+    text: string,
+    lang = 'french',
+  ): Promise<{ count: number; games: Game[] }> {
+    const steamGames = await axios.get(findByNameUrl(text, 'french'));
 
-    if (response.status === 200) {
-      const formatedResponse = await Promise.all(
-        response.data.items.map(async (item) => {
-          const detailsResponse = await axios.get(getGameDetailsURL(item.id));
-
-          return {
-            id: item.id,
-            name: item.name,
-            publisher: detailsResponse.data[item.id].data.developers[0],
-            mini_image: detailsResponse.data[item.id].data.header_image,
-            bg_image: detailsResponse.data[item.id].data.background,
-            cover_image: detailsResponse.data[item.id].data.background_raw,
-            price:
-              detailsResponse.data[item.id].data.price_overview
-                ?.final_formatted ?? 'Gratuit',
-            description:
-              detailsResponse.data[item.id].data.detailed_description,
-          };
+    if (steamGames && steamGames.status === 200) {
+      const games = await Promise.all(
+        steamGames.data.items.map(async (game): Promise<Game> => {
+          return await this.getGameDetails(game.id, lang);
         }),
       );
+
       return Promise.resolve({
-        count: response.data.total,
-        games: formatedResponse,
+        count: games.length,
+        games: games,
       });
     }
     return Promise.reject({ count: 0, games: [] });
@@ -121,26 +67,54 @@ export class GameService {
   /**
    * Get a game by id
    * @param id - game id
-   * @returns
+   * @returns game
    */
-  async getGameById(id: string): Promise<Game> {
-    const detailsResponse = await axios.get(getGameDetailsURL(id));
+  async getGameDetails(id: string, lang = 'french'): Promise<Game> {
+    const steamGameDetail = await axios.get(getGameDetailsUrl(id, lang));
 
-    if (detailsResponse.status === 200) {
+    if (steamGameDetail && steamGameDetail.status === 200) {
+      console.log(steamGameDetail);
       return Promise.resolve({
         id: id,
-        name: detailsResponse.data[id].data.name,
-        publisher: detailsResponse.data[id].data.developers[0],
-        mini_image: detailsResponse.data[id].data.header_image,
-        bg_image: detailsResponse.data[id].data.background,
-        cover_image: detailsResponse.data[id].data.background_raw,
+        name: steamGameDetail.data[id].data.name,
+        publisher: steamGameDetail.data[id].data.developers[0],
+        mini_image: steamGameDetail.data[id].data.header_image,
+        bg_image: steamGameDetail.data[id].data.background,
+        cover_image: steamGameDetail.data[id].data.background_raw,
+        description: steamGameDetail.data[id].data.detailed_description,
         price:
-          detailsResponse.data[id].data.price_overview?.final_formatted ??
-          'Gratuit',
-        description: detailsResponse.data[id].data.detailed_description,
+          steamGameDetail.data[id].data.price_overview?.final_formatted ??
+          lang === 'french'
+            ? 'Gratuit'
+            : 'Free',
       });
     }
 
-    return Promise.reject(null);
+    return Promise.reject({});
+  }
+
+  /**
+   * Get reviews of a steam game
+   * @param id - game id
+   * @returns list of reviews
+   */
+  async getGameReviews(id: string): Promise<GameReview[]> {
+    const steamGameReviews = await axios.get(getGameReviewsUrl(id));
+
+    if (steamGameReviews && steamGameReviews.status === 200) {
+      const reviews = await Promise.all(
+        steamGameReviews.data.reviews.map((r): GameReview => {
+          return {
+            username: `User_${(Math.random() * 1000).toFixed(0)}`,
+            good_grade: r.voted_up,
+            text: r.review,
+          };
+        }),
+      );
+
+      return reviews;
+    }
+
+    return Promise.reject({});
   }
 }
