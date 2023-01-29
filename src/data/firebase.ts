@@ -169,3 +169,21 @@ export const removeWishlist = async (
   const newUser = await getUserById(id);
   return Promise.resolve(newUser);
 };
+
+/**
+ * Change password for a user in database
+ * @param id : user id
+ * @param newPassword : new password
+ */
+export const changePassword = async (
+  id: string,
+  newPassword: string,
+): Promise<User> => {
+  await updateDoc(doc(db, `users/${id}`), {
+    password: newPassword,
+  });
+
+  // verification
+  const newUser = await getUserById(id);
+  return Promise.resolve(newUser);
+}

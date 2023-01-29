@@ -6,6 +6,7 @@ import {
   removeLike,
   addWishlist,
   removeWishlist,
+  changePassword,
 } from '../../data/firebase';
 import { User } from './user.entity';
 
@@ -18,15 +19,9 @@ export class UserService {
    * @returns
    */
   async signIn(email: string, password: string): Promise<User> {
-    const users = await getUsers();
-
-    for (const user of users) {
-      if (user.email === email && user.password === password) {
-        return user;
-      }
-    }
-
-    return Promise.reject("User doesn't exist");
+    const newUser = await this.findUserByEmail(email);
+    if (!newUser) { return Promise.reject("User doesn't exist"); }
+    return newUser;
   }
 
   /**
@@ -35,13 +30,20 @@ export class UserService {
    * @returns
    */
   async signUp(newUser: User): Promise<User> {
-    const users = await getUsers();
-    const sameUser = users.find((u) => u.email === newUser.email);
-
-    if (sameUser) {
-      return Promise.reject('User already exist');
-    }
+    const sameUser = await this.findUserByEmail(newUser.email)
+    if (sameUser) { return Promise.reject('User already exist'); }
     return await createUser(newUser);
+  }
+
+  /**
+   * Change user password
+   * @param id - user id
+   * @param idGame - game id
+   */
+  async changePassword(email: string, newPassword: string): Promise<User> {
+    const user = await this.findUserByEmail(email);
+    if (!user) { return Promise.reject("User doesn't exist"); }
+    return await changePassword(user.id, newPassword);
   }
 
   /**
@@ -78,5 +80,9 @@ export class UserService {
    */
   async unwishlist(id: string, idGame: string): Promise<User> {
     return await removeWishlist(id, idGame);
+  }
+
+  async findUserByEmail(email: string): Promise<User> {
+    return (await getUsers()).find((user) => user.email === email);
   }
 }

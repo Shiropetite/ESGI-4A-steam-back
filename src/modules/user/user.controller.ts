@@ -20,6 +20,14 @@ export class UserController {
     return await this.service.signUp(newUser);
   }
 
+  @Put('/change-password')
+  async changePassword(
+    @Query('email') email: string,
+    @Query('pwd') newPassword: string,
+  ): Promise<User> {
+    return await this.service.changePassword(email, newPassword);
+  }
+
   @Put('/:id/add-like/:idGame')
   async like(
     @Param('id') id: string,
