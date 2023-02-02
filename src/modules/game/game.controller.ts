@@ -13,7 +13,7 @@ export class GameController {
   ): Promise<{ games: Game[] }> {
     return await this.service.getTop(
       size ? Number.parseInt(size) : undefined,
-      lang,
+      lang != 'français' ? lang : undefined,
     );
   }
 
@@ -22,7 +22,10 @@ export class GameController {
     @Query('name') name: string,
     @Query('lang') lang: string,
   ): Promise<{ count: number; games: Game[] }> {
-    return await this.service.findByName(name, lang);
+    return await this.service.findByName(
+      name,
+      lang != 'français' ? lang : undefined,
+    );
   }
 
   @Get('/:id/reviews')
